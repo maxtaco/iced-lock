@@ -1,0 +1,23 @@
+{
+  "name": "iced-lock",
+  "version": "1.0.0",
+  "description": "Simple lock class",
+  "homepage": "https://github.com/maxtaco/iced-lock",
+  "main": "./index",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maxtaco/iced-lock.git"
+  },
+  "devDependencies": {
+    "iced-coffee-script": "^1.7.1-c"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "dependencies": {
+    "iced-runtime": "^1.0.1"
+  }
+}
