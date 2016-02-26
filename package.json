@@ -9,7 +9,7 @@
     "url": "https://github.com/maxtaco/iced-lock.git"
   },
   "devDependencies": {
-    "iced-coffee-script": "^1.7.1-c"
+    "iced-coffee-script": "^108.0.9"
   },
   "licenses": [
     {
