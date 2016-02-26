@@ -1,6 +1,6 @@
 {
   "name": "iced-lock",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Simple lock class",
   "homepage": "https://github.com/maxtaco/iced-lock",
   "main": "./index",
