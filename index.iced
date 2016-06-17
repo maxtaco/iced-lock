@@ -76,3 +76,58 @@ exports.Table = class Table
   lookup : (name) -> @locks[name]
 
 ##-----------------------------------------------------------------------
+
+class SingleFlighter
+
+  constructor : ({@table, @key}) ->
+    @seqid = null
+    @waiter = null
+    @open = true
+    @refs = 0
+
+  _incref : () -> ++@refs
+  _decref : () -> if --@refs is 0 then @table._remove { @key }
+
+  _enter : ({seqid}, cb) ->
+    if @open
+      @open = false
+      @seqid = seqid
+      cb null, @
+    else if @waiter?
+      if seqid > @waiter.seqid
+        tmp = @waiter
+        @waiter = { cb, seqid }
+        tmp.cb new Error "our seqid=#{tmp.seqid} was preempted by #{seqid}"
+      else
+        cb new Error "our seqid=#{seqid} is too stale (since #{@waiter.seqid} is ahead of us)"
+      @_decref()
+    else if seqid > @seqid
+      @waiter = { seqid, cb }
+    else
+      cb new Error "our seqid=#{seqid} is too stale (since #{@seqid} is already in flight)"
+      @_decref()
+
+  release : () ->
+    if @waiter?
+      {@seqid, cb} = @waiter
+      @waiter = null
+      cb null, @
+    else
+      @open = true
+      @seqid = null
+    @_decref()
+
+##-----------------------------------------------------------------------
+
+exports.SingleFlightTable = class SingleFlightTable
+
+  constructor : () -> @_jobs = {}
+  _create : ({key}) -> @_jobs[key] = new SingleFlighter { table : @, key : key }
+  _remove : ({key}) -> delete @_jobs[key]
+  enter : ({seqid, key}, cb) ->
+    s = @_jobs[key] or @_create { key }
+    s._incref()
+    s._enter { seqid }, cb
+
+##-----------------------------------------------------------------------
+

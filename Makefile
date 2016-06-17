@@ -16,13 +16,16 @@ $(BUILD_STAMP): \
 clean:
 	rm index.js
 
-build: $(BUILD_STAMP) 
+build: $(BUILD_STAMP)
 
-setup: 
+setup:
 	npm install -d
 
 test:
 	iced test/run.iced
 
-.PHONY: test setup
+coverage:
+	./node_modules/.bin/istanbul cover $(ICED) test/run.iced
+
+.PHONY: test setup coverage
 
