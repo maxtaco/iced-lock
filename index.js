@@ -81,11 +81,22 @@
       return l;
     };
 
-    Table.prototype.acquire = function(name, cb, wait) {
-      var l, was_open, ___iced_passed_deferral, __iced_deferrals, __iced_k;
+    Table.prototype.acquire = function() {
+      throw new Error("the acquire function of this library is retired; used acquire2 instead");
+    };
+
+    Table.prototype.acquire2 = function(_arg, cb) {
+      var err, l, name, no_wait, wait, was_open, ___iced_passed_deferral, __iced_deferrals, __iced_k;
       __iced_k = __iced_k_noop;
       ___iced_passed_deferral = iced.findDeferral(arguments);
+      name = _arg.name, no_wait = _arg.no_wait;
+      if (name == null) {
+        err = new Error("Bad acquire2 call; 'name' parameter is undefined");
+        return cb(err);
+      }
+      wait = !no_wait;
       l = this.locks.get(name);
+      was_open = true;
       if (l == null) {
         l = this.create(name);
       } else {
@@ -99,10 +110,10 @@
               __iced_deferrals = new iced.Deferrals(__iced_k, {
                 parent: ___iced_passed_deferral,
                 filename: "/Users/max/src/iced/iced-lock/index.iced",
-                funcname: "Table.acquire"
+                funcname: "Table.acquire2"
               });
               l.acquire(__iced_deferrals.defer({
-                lineno: 73
+                lineno: 87
               }));
               __iced_deferrals._fulfill();
             })(__iced_k);
@@ -112,22 +123,9 @@
         });
       })(this)((function(_this) {
         return function() {
-          return cb(l, was_open);
+          return cb(null, l, was_open);
         };
       })(this));
-    };
-
-    Table.prototype.acquire2 = function(_arg, cb) {
-      var err, fn, name, no_wait;
-      name = _arg.name, no_wait = _arg.no_wait;
-      if (name == null) {
-        err = new Error("Bad acquire2 call; 'name' parameter is undefined");
-        return cb(err);
-      }
-      fn = function(lock) {
-        return cb(null, lock);
-      };
-      return this.acquire(name, fn, !no_wait);
     };
 
     Table.prototype.lookup = function(name) {

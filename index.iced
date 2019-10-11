@@ -59,12 +59,26 @@ exports.Table = class Table
     @locks.set(name, l)
     return l
 
+  acquire : () ->
+    throw new Error "the acquire function of this library is retired; used acquire2 instead"
+
   # @param {String} name The name of the lock to grab or create.
+  # @param {no_wait} bool True if we shouldn't wait for the lock, just null out if not available
   # @param {callback} cb The callback to fire when acquired;
-  #    Callback with `(l,was_open)` where `l` is the {NamedLock} and
-  #    `was_open` is a bool saying whether it was open to begin with.
-  acquire : (name, cb, wait) ->
+  #    Callback with `(err,l,was_open)` where `l` is the {NamedLock} and
+  #    `was_open` is a bool saying whether it was open to begin with. err is set
+  #    if you have called for a lock without a name, but might be for other errors in the
+  #    future.
+  #
+  # We calling this function acquire2 since it shouldn't clash with the acquire from
+  # the earlier version of this library. See above.
+  acquire2 : ({name, no_wait}, cb) ->
+    unless name?
+      err = new Error "Bad acquire2 call; 'name' parameter is undefined"
+      return cb err
+    wait = !no_wait
     l = @locks.get(name)
+    was_open = true
     if not l?
       l = @create(name)
     else
@@ -74,18 +88,7 @@ exports.Table = class Table
       await l.acquire defer()
     else
       l = null
-    cb l, was_open
-
-  # as above, but a different argument scheme; by default we wait, and also,
-  # the callback is last. Finally, we use the (err, ret) convention for
-  # returning the lock.
-  acquire2 : ({name, no_wait}, cb) ->
-    unless name?
-      err = new Error "Bad acquire2 call; 'name' parameter is undefined"
-      return cb err
-    fn = (lock) ->
-      cb null, lock
-    @acquire name, fn, !no_wait
+    cb null, l, was_open
 
   # @param {String} name The name of the lock to grab.
   lookup : (name) -> @locks.get(name)
