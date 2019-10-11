@@ -86,13 +86,12 @@
     };
 
     Table.prototype.acquire2 = function(_arg, cb) {
-      var err, l, name, no_wait, wait, was_open, ___iced_passed_deferral, __iced_deferrals, __iced_k;
+      var l, name, no_wait, wait, was_open, ___iced_passed_deferral, __iced_deferrals, __iced_k;
       __iced_k = __iced_k_noop;
       ___iced_passed_deferral = iced.findDeferral(arguments);
       name = _arg.name, no_wait = _arg.no_wait;
       if (name == null) {
-        err = new Error("Bad acquire2 call; 'name' parameter is undefined");
-        return cb(err);
+        throw new Error("Bad acquire2 call; 'name' parameter is undefined");
       }
       wait = !no_wait;
       l = this.locks.get(name);
@@ -113,7 +112,7 @@
                 funcname: "Table.acquire2"
               });
               l.acquire(__iced_deferrals.defer({
-                lineno: 87
+                lineno: 85
               }));
               __iced_deferrals._fulfill();
             })(__iced_k);
@@ -123,7 +122,7 @@
         });
       })(this)((function(_this) {
         return function() {
-          return cb(null, l, was_open);
+          return cb(l, was_open);
         };
       })(this));
     };
