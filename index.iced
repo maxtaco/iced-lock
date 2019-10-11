@@ -41,39 +41,57 @@ class NamedLock extends Lock
   incref : -> ++@refs
   decref : -> --@refs
   release : ->
-    super()
     if @decref() is 0
-      delete @tab.locks[@name]
+      delete @tab.locks.delete(@name)
+    super()
 
 ##-----------------------------------------------------------------------
 
 # A table of named locks.
 exports.Table = class Table
   constructor : ->
-    @locks = {}
+    @locks = new Map
 
   # @private
   # @param {String} name The name of the lock
   create : (name) ->
     l = new NamedLock this, name
-    @locks[name] = l
+    @locks.set(name, l)
+    return l
+
+  acquire : () ->
+    throw new Error "the acquire function of this library is retired; used acquire2 instead"
 
   # @param {String} name The name of the lock to grab or create.
+  # @param {no_wait} bool True if we shouldn't wait for the lock, just null out if not available
   # @param {callback} cb The callback to fire when acquired;
-  #    Callback with `(l,was_open)` where `l` is the {NamedLock} and
-  #    `was_open` is a bool saying whether it was open to begin with.
-  acquire : (name, cb, wait) ->
-    l = @locks[name] or @create(name)
-    was_open = l._open
+  #    Callback with `(err,l,was_open)` where `l` is the {NamedLock} and
+  #    `was_open` is a bool saying whether it was open to begin with. err is set
+  #    if you have called for a lock without a name, but might be for other errors in the
+  #    future.
+  #
+  # We calling this function acquire2 since it shouldn't clash with the acquire from
+  # the earlier version of this library. See above.
+  acquire2 : ({name, no_wait}, cb) ->
+    unless name?
+      err = new Error "Bad acquire2 call; 'name' parameter is undefined"
+      return cb err
+    wait = !no_wait
+    l = @locks.get(name)
+    was_open = true
+    if not l?
+      l = @create(name)
+    else
+      was_open = l._open
     l.incref()
     if wait or l._open
       await l.acquire defer()
     else
       l = null
-    cb l, was_open
+    cb null, l, was_open
 
   # @param {String} name The name of the lock to grab.
-  lookup : (name) -> @locks[name]
+  lookup : (name) -> @locks.get(name)
 
 ##-----------------------------------------------------------------------
 
@@ -121,11 +139,14 @@ class SingleFlighter
 
 exports.SingleFlightTable = class SingleFlightTable
 
-  constructor : () -> @_jobs = {}
-  _create : ({key}) -> @_jobs[key] = new SingleFlighter { table : @, key : key }
-  _remove : ({key}) -> delete @_jobs[key]
+  constructor : () -> @_jobs = new Map
+  _create : ({key}) ->
+    ret = new SingleFlighter { table : @, key : key }
+    @_jobs.set(key, ret)
+    return ret
+  _remove : ({key}) -> @_jobs.delete(key)
   enter : ({seqid, key}, cb) ->
-    s = @_jobs[key] or @_create { key }
+    s = @_jobs.get(key) or @_create { key }
     s._incref()
     s._enter { seqid }, cb
 

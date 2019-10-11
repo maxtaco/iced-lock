@@ -34,7 +34,7 @@ table_acquire_test = (cb) =>
   global.gc()
   d = Date.now()
   for i in [0...STEPS]
-    await t.acquire "#{i}", defer(locks[locks.length]), true
+    await t.acquire2 {name : "#{i}"}, defer(_, locks[locks.length])
   dt = Date.now() - d
   global.gc()
   note = "table acquire"
